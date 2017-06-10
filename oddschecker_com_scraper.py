@@ -51,7 +51,7 @@ def parse_oddschecker_table(table):
                 content = parse_oddschecker_matchline(line)
                 content['match_date'] = date
                 content['parsed_at_date'] = datetime.datetime.today().strftime("%A %d %B %Y")
-                content['parsed_at_time'] = datetime.datetime.today().strftime("%H-%M-%S")
+                content['parsed_at_time'] = datetime.datetime.today().strftime("%H-%m-%S")
                 contents.append(content)
         except KeyError:
             pass
@@ -68,7 +68,7 @@ if __name__ == "__main__":
         content = BeautifulSoup(html_page, "html5lib")
         table = content.find('table')
         to_add = parse_oddschecker_table(table)
-        ajourhui = datetime.datetime.today().strftime("date=%Y-%M-%d_time=%Hh-%Mm")
+        ajourhui = datetime.datetime.today().strftime("date=%Y-%m-%d_time=%Hh-%Mm")
         print(ajourhui)
         with open('scrape_export_{today}.json'.format(today=ajourhui), 'w') as f:
             json.dump(to_add, f)
