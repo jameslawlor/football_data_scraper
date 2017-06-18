@@ -70,6 +70,6 @@ if __name__ == "__main__":
         to_add = parse_oddschecker_table(table)
         ajourhui = datetime.datetime.today().strftime("date=%Y-%m-%d_time=%Hh-%Mm")
         print(ajourhui)
-        with open('scrape_export_{today}.json'.format(today=ajourhui), 'w') as f:
+        with open('scrape_export_oddschecker_com_{today}.json'.format(today=ajourhui), 'w') as f:
             json.dump(to_add, f)
     print("Fin")
