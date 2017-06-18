@@ -30,7 +30,7 @@ def parse_table_summary(driver, num_pages, tag='overall'):
             element.click()
             sleep(5)
 
-        html_overall = BeautifulSoup(driver.page_source, "html5lib")
+        html = BeautifulSoup(driver.page_source, "html5lib")
         table_html = html.find('div', attrs={'id':'statistics-team-table-summary'})
         team_names = table_html.findAll('td', class_='tn')
         tournaments = table_html.findAll('td', class_='tournament')
@@ -80,6 +80,75 @@ def get_summary(driver, num_pages: int):
 
     return res_final
 
+def parse_table_defense(driver, num_pages, tag='overall'):
+    pp = PrettyPrinter()
+
+    result = []
+    for i in range(num_pages):
+        # Don't click 'next' if you're on the first page
+        if i:
+            element = driver.find_element_by_id('next')
+            element.click()
+            sleep(5)
+
+        html = BeautifulSoup(driver.page_source, "html5lib")
+        table_html = html.find('div', attrs={'id':'statistics-team-table-defensive'})
+        # team_name, tournament, shotsPerGame, tacklePerGame, interceptionPerGame, foulsPerGame, offsideGivenPerGame, stat-value rating
+        team_names = table_html.findAll('td', class_='tn')
+        #print('team name', len(team_names))
+        tournaments = table_html.findAll('td', class_='tournament')
+        #print('tournament', len(tournaments))
+        shotsPerGame = table_html.findAll('td', class_='shotsConcededPerGame ')
+        #print('shots per game', len(shotsPerGame))
+        tacklePerGame = table_html.findAll('td', class_='tacklePerGame sorted ')
+        #print('tackle per game', len(tacklePerGame))
+        interceptionPerGame = table_html.findAll('td', class_='interceptionPerGame ')
+        #print('interception per game', len(interceptionPerGame))
+        offsidesPerGame = table_html.findAll('td', class_='offsideGivenPerGame ')
+        #print('offsides per game', len(offsidesPerGame))
+        rating = table_html.findAll('span', class_='stat-value rating') 
+        #print('rating', len(rating))
+        page_summary = []
+        for tn, trn, spg, tpg, rt in zip(team_names, tournaments, shotsPerGame, tacklePerGame, rating):
+            page_summary.append({'team-name': tn.getText(),
+                                'tournament': trn.getText(),
+                                'shots-per-game-{}'.format(tag): spg.getText(),
+                                'tackles-per-game-{}'.format(tag): tpg.getText(),
+                                'rating': rt.getText()})
+        #pp.pprint(page_summary)
+        result.extend(page_summary)
+    return result
+
+def get_defense(driver, num_pages: int):
+    pp = PrettyPrinter()
+    element = driver.find_element_by_link_text('Defensive')
+    element.click()
+    sleep(5)
+
+    # Get overall stats
+    res1 = parse_table_defense(driver, num_pages, tag='overall')
+
+    ### Get stats for home games
+    element = driver.find_element_by_link_text('Home')
+    element.click()
+    sleep(5)
+    res2 = parse_table_defense(driver, num_pages, tag='home')
+
+    ### Get stats for away games
+    element = driver.find_element_by_link_text('Away')
+    element.click()
+    sleep(5)
+    res3 = parse_table_defense(driver, num_pages, tag='away')
+
+    ## Join results
+    res_final = []
+    for overall, home, away in zip(res1, res2, res3):
+        stats = {**overall, **home, **away}
+        res_final.append(stats)
+    pp.pprint(res_final)
+    return res_final
+
+
 def print_json(lst, tag):
     print('Here')
     ajourhui = datetime.datetime.today().strftime("date=%Y-%m-%d_time=%Hh-%Mm")
@@ -93,8 +162,9 @@ if __name__ == "__main__":
         driver.get("https://www.whoscored.com/Statistics")
         html = BeautifulSoup(driver.page_source, "html5lib")
         num_pages = get_number_pages(html)
-        summary = get_summary(driver, num_pages)
-        print_json(summary, tag='summary')
+        #summary = get_summary(driver, num_pages)
+        #print_json(summary, tag='summary')
+        defense = get_defense(driver, num_pages)
     finally:
         driver.close()
         pass
