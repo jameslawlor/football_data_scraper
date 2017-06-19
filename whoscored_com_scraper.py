@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from pprint import PrettyPrinter 
 import selenium
 from selenium import webdriver
+from selenium.common.exceptions import ElementNotInteractableException
 from time import sleep
 
 #USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36'
@@ -20,15 +21,25 @@ def get_number_pages(bs4_html):
     n = int(target.group(0))
     return n
 
+def click_next(driver: webdriver):
+    try:
+        next_button = driver.find_element_by_id('next')
+        next_button.click()
+        sleep(5)
+    except ElementNotInteractableException:
+        next_buttons = driver.find_elements_by_xpath("//a[@id='next']")
+        next_buttons[1].click()
+        sleep(5)
+
+
+
 def parse_table_summary(driver, num_pages, tag='overall'):
 
     result = []
     for i in range(num_pages):
         # Don't click 'next' if you're on the first page
         if i:
-            element = driver.find_element_by_id('next')
-            element.click()
-            sleep(5)
+            click_next(driver)
 
         html = BeautifulSoup(driver.page_source, "html5lib")
         table_html = html.find('div', attrs={'id':'statistics-team-table-summary'})
@@ -87,9 +98,8 @@ def parse_table_defense(driver, num_pages, tag='overall'):
     for i in range(num_pages):
         # Don't click 'next' if you're on the first page
         if i:
-            element = driver.find_element_by_id('next')
-            element.click()
-            sleep(5)
+            click_next(driver)
+        print('On page {}'.format(i+1))
 
         html = BeautifulSoup(driver.page_source, "html5lib")
         table_html = html.find('div', attrs={'id':'statistics-team-table-defensive'})
@@ -109,14 +119,16 @@ def parse_table_defense(driver, num_pages, tag='overall'):
         rating = table_html.findAll('span', class_='stat-value rating') 
         #print('rating', len(rating))
         page_summary = []
-        for tn, trn, spg, tpg, rt in zip(team_names, tournaments, shotsPerGame, tacklePerGame, rating):
+        for tn, trn, spg, tpg, ipg, opg, rt in zip(team_names, tournaments, shotsPerGame, tacklePerGame, interceptionPerGame, offsidesPerGame, rating):
             page_summary.append({'team-name': tn.getText(),
                                 'tournament': trn.getText(),
                                 'shots-per-game-{}'.format(tag): spg.getText(),
                                 'tackles-per-game-{}'.format(tag): tpg.getText(),
+                                'interceptions-per-game-{}'.format(tag): ipg.getText(),
+                                'offsides-per-game-{}'.format(tag): opg.getText(),
                                 'rating': rt.getText()})
-        #pp.pprint(page_summary)
         result.extend(page_summary)
+
     return result
 
 def get_defense(driver, num_pages: int):
@@ -128,15 +140,15 @@ def get_defense(driver, num_pages: int):
     # Get overall stats
     res1 = parse_table_defense(driver, num_pages, tag='overall')
 
-    ### Get stats for home games
-    element = driver.find_element_by_link_text('Home')
-    element.click()
+    # Get stats for home games
+    elements = driver.find_elements_by_link_text('Home')
+    elements[1].click()
     sleep(5)
     res2 = parse_table_defense(driver, num_pages, tag='home')
 
-    ### Get stats for away games
-    element = driver.find_element_by_link_text('Away')
-    element.click()
+    # Get stats for away games
+    elements = driver.find_elements_by_link_text('Away')
+    elements[1].click()
     sleep(5)
     res3 = parse_table_defense(driver, num_pages, tag='away')
 
@@ -165,6 +177,7 @@ if __name__ == "__main__":
         #summary = get_summary(driver, num_pages)
         #print_json(summary, tag='summary')
         defense = get_defense(driver, num_pages)
+        print_json(defense, tag='defensive')
     finally:
         driver.close()
         pass
