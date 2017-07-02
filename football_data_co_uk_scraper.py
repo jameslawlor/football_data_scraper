@@ -14,60 +14,62 @@ url_template = "http://football-data.co.uk/mmz4281/{season}/{league}.csv"
 
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 
+# Pick the countries to scrape, reads from dictionary dic below
+countries_to_scrape = ["england"]
 
 dic = {
-#        "england": {
-#                "code" : "E",   # used in URL
-#		"start_year" : 2009,
-#		"end_year" : 2016,
-#		"leagues" : [
-#                            ("0","prem"),  # (url_required, human_readable)
-#			    ("1","champ"),
-#			    ("2","league_1"),
-#			    ("3","league_2"),
-#		#	    ("C","conference" )
-#			    ],
-#	},
-#        "germany":{
-#                "code" : "D",
-#		"start_year" : 2009,
-#		"end_year" : 2016,
-#		"leagues" : [
-#                            ("1","bundes_1"),  # (url_required, human_readable)
-#			    ("2","bundes_2"),
-#                            ],
-#        },
+        "england": {
+                "code" : "E",   # used in URL
+		"start_year" : 2009,
+		"end_year" : 2016,
+		"leagues" : [
+                            ("0","prem"),  # (url_required, human_readable)
+			    ("1","champ"),
+			    ("2","league_1"),
+			    ("3","league_2"),
+		#	    ("C","conference" )
+			    ],
+	},
+        "germany":{
+                "code" : "D",
+		"start_year" : 2009,
+		"end_year" : 2016,
+		"leagues" : [
+                            ("1","bundes_1"),  
+			    ("2","bundes_2"),
+                            ],
+        },
         "france":{
                 "code" : "F",
 		"start_year" : 2015,
 		"end_year" : 2016,
 		"leagues" : [
-                            ("1","le_championnat"),  # (url_required, human_readable)
+                            ("1","le_championnat"),  
 			    ("2","div_2"),
                             ],
         },
-#        "italy":{
-#                "code" : "I",
-#		"start_year" : 2009,
-#		"end_year" : 2016,
-#		"leagues" : [
-#                            ("1","serie_a"),  # (url_required, human_readable)
-#			    ("2","serie_b"),
-#                            ],
-#        },
-#        "spain":{
-#                "code" : "SP",
-#		"start_year" : 2009,
-#		"end_year" : 2016,
-#		"leagues" : [
-#                            ("1","la_liga_1"),  # (url_required, human_readable)
-#			    ("2","la_liga_2"),
-#                            ],
-#        },
+        "italy":{
+                "code" : "I",
+		"start_year" : 2009,
+		"end_year" : 2016,
+		"leagues" : [
+                            ("1","serie_a"),  
+			    ("2","serie_b"),
+                            ],
+        },
+        "spain":{
+                "code" : "SP",
+		"start_year" : 2009,
+		"end_year" : 2016,
+		"leagues" : [
+                            ("1","la_liga_1"),  
+			    ("2","la_liga_2"),
+                            ],
+        },
 }
 
 with requests.Session() as s:
-    for country in list(dic.keys()):
+    for country in countries_to_scrape: #list(dic.keys()):
         print(country)  
         country_data = dic[country]
         code = country_data["code"]
@@ -86,8 +88,6 @@ with requests.Session() as s:
                 league_readable = league[1]
                 filename = league_readable + "_" + season + ".csv"
 
-#                df = pd.read_csv(url,parse_dates=True,encoding="latin1")
-#                print(df.head())
                 s.headers.update(headers)
                 download = s.get(url)
                 decoded_content = download.text
