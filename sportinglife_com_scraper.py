@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timedelta
 import urllib.request
+import sys
 from bs4 import BeautifulSoup
 from pprint import PrettyPrinter 
 
@@ -8,7 +9,7 @@ URL_MAIN = "https://www.sportinglife.com/"
 URL_FOOTBALL = URL_MAIN + "football/fixtures-results"
 
 def print_json(match_dict):
-    title = 'match_result_date={}_{}_v_{}.json'.format(
+    title = 'scrape_export_sportinglife_com_match_result_date={}_{}_v_{}.json'.format(
                 match_dict['date'],
                 match_dict['teamA'],
                 match_dict['teamB'])
@@ -52,6 +53,10 @@ def parse_table(date):
 
 if __name__ == '__main__':
     print('Starting...')
-    for i in range(1, 2):
+    if len(sys.argv) >= 2:
+        lookback_days = int(sys.argv[1])
+    else:
+        lookback_days = 2
+    for i in range(1, lookback_days):
         t = datetime.today() - timedelta(days=i)
         parse_table(date=t)

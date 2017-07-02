@@ -96,4 +96,7 @@ pip-selfcheck.json
 .ipynb_checkpoints
 .ipynb_checkpoints/*
 
+# Selenium
+geckodriver.log
+
 # End of https://www.gitignore.io/api/vim,pycharm,virtualenv
