@@ -161,6 +161,81 @@ def get_defense(driver, num_pages: int):
     return res_final
 
 
+def parse_table_offense(driver, num_pages, tag='overall'):
+    pp = PrettyPrinter()
+
+    result = []
+    for i in range(num_pages):
+        # Don't click 'next' if you're on the first page
+        if i:
+            click_next(driver)
+        print('On page {}'.format(i+1))
+
+        html = BeautifulSoup(driver.page_source, "html5lib")
+        table_html = html.find('div', attrs={'id':'statistics-team-table-offensive'})
+        # team_name, tournament, shotsPerGame, tacklePerGame, interceptionPerGame, foulsPerGame, offsideGivenPerGame, stat-value rating
+        team_names = table_html.findAll('td', class_='tn')
+        print("team names", len(team_names))
+        tournaments = table_html.findAll('td', class_='tournament')
+        print("tournaments", len(tournaments))
+        shotsPerGame = table_html.findAll('td', class_='shotsPerGame ')
+        print("shots per game", len(shotsPerGame))
+        # Shots on target per game
+        shotsOTPerGame = table_html.findAll('td', class_='shotOnTargetPerGame ')
+        print("shots on target per game", len(shotsOTPerGame))
+        # Dribbles per game
+        dribblesPG = table_html.findAll('td', class_='dribbleWonPerGame sorted ')
+        print("dribbles", len(dribblesPG))
+        # Fouled per game
+        foulsPG = table_html.findAll('td', class_='foulGivenPerGame ')
+        print("fouls", len(foulsPG))
+        # Rating
+        rating = table_html.findAll('span', class_='stat-value rating') 
+        print("rating", len(rating))
+        page_summary = []
+        for tn, trn, spg, sot, dpg, fpg, rt in zip(team_names, tournaments, shotsPerGame, shotsOTPerGame, dribblesPG, foulsPG, rating):
+            page_summary.append({'team-name': tn.getText(),
+                                'tournament': trn.getText(),
+                                'shots-per-game-{}'.format(tag): spg.getText(),
+                                'shots-on-target-per-game-{}'.format(tag): sot.getText(),
+                                'dribbles-per-game-{}'.format(tag): dpg.getText(),
+                                'fouls-per-game-{}'.format(tag): fpg.getText(),
+                                'rating': rt.getText()})
+            result.extend(page_summary)
+
+    return result
+
+
+def get_offense(driver, num_pages: int):
+    pp = PrettyPrinter()
+    element = driver.find_element_by_link_text('Offensive')
+    element.click()
+    sleep(5)
+
+    # Get overall stats
+    res1 = parse_table_offense(driver, num_pages, tag='overall')
+
+    # Get stats for home games
+    elements = driver.find_elements_by_link_text('Home')
+    elements[1].click()
+    sleep(5)
+    res2 = parse_table_offense(driver, num_pages, tag='home')
+
+    # Get stats for away games
+    elements = driver.find_elements_by_link_text('Away')
+    elements[1].click()
+    sleep(5)
+    res3 = parse_table_offense(driver, num_pages, tag='away')
+
+    # Join results
+    res_final = []
+    for overall, home, away in zip(res1, res2, res3):
+        stats = {**overall, **home, **away}
+        res_final.append(stats)
+    pp.pprint(res_final)
+    return res_final
+
+
 def print_json(lst, tag):
     print('Here')
     ajourhui = datetime.datetime.today().strftime("date=%Y-%m-%d_time=%Hh-%Mm")
@@ -172,12 +247,15 @@ if __name__ == "__main__":
     # wrapping in try/finally as to make sure the browser gets closed no matter what
     try:
         driver.get("https://www.whoscored.com/Statistics")
+        sleep(20)
         html = BeautifulSoup(driver.page_source, "html5lib")
         num_pages = get_number_pages(html)
-        #summary = get_summary(driver, num_pages)
-        #print_json(summary, tag='summary')
+        summary = get_summary(driver, num_pages)
+        print_json(summary, tag='summary')
         defense = get_defense(driver, num_pages)
         print_json(defense, tag='defensive')
+        offense = get_offense(driver, num_pages)
+        print_json(offense, tag='offensive')
     finally:
         driver.close()
         pass
